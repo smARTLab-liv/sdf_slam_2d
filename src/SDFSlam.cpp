@@ -18,6 +18,7 @@
 
 #include "SDFSlam.h"
 
+
 namespace sdfslam{
 
     SignedDistanceField::SignedDistanceField() {
@@ -84,6 +85,8 @@ namespace sdfslam{
       //matA_pub_ = it_.advertise("MatA", 10);
       // loadMap("map.txt");
       // ROS_INFO("loadedmap");
+
+      amap = new SDFVectorMap();
 
       VecMapFloat sdf((unsigned long) p_map_size_x_, std::vector<float>((unsigned long) p_map_size_y_, 0.0));
       sdf_ = sdf;
@@ -1031,7 +1034,6 @@ namespace sdfslam{
       for (int i = 0; i < 3; i++) {
         searchdirplus[i] = false;
       }
-
       converged_ = false;
       float searchfacs[3] = {1, 1, p_num_iter_ / 3}; //todo magic
       //float searchfacs[3] = { 1, 1, 1};

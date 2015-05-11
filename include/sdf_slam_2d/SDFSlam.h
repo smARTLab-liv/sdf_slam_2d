@@ -20,8 +20,11 @@
 #ifndef SDF_H__
 #define SDF_H__
 
-#include "Types.h"
-#include "UtilityFunctions.h"
+#include "map/AbstractMap.h"
+#include "map/VectorMap.h"
+
+#include "utility/Types.h"
+#include "utility/UtilityFunctions.h"
 
 
 #include <iostream>
@@ -151,6 +154,8 @@ namespace sdfslam {
 
 
     protected:
+
+        AbstractMap* amap;
 
         ros::ServiceServer serviceSaveMap;
         ros::ServiceServer serviceLoadMap;
