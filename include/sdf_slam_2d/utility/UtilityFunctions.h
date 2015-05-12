@@ -33,6 +33,16 @@ namespace util{
         return point;
     }
 
+    static double round(double Zahl, unsigned int Stellen) {
+        Zahl *= pow(10, Stellen);
+        if (Zahl >= 0)
+            floor(Zahl + 0.5);
+        else
+            ceil(Zahl - 0.5);
+        Zahl /= pow(10, Stellen);
+        return Zahl;
+    }
+
     inline float p2pDist(float p1x, float p1y, float* p2){
         return sqrt( (p1x-p2[0])*(p1x-p2[0])+(p1y-p2[1])*(p1y-p2[1]) );
     }

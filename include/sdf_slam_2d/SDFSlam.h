@@ -23,6 +23,9 @@
 #include "map/AbstractMap.h"
 #include "map/VectorMap.h"
 
+#include "registration/AbstractRegistration.h"
+#include "registration/GaussNewton.h"
+
 #include "utility/Types.h"
 #include "utility/UtilityFunctions.h"
 
@@ -56,7 +59,6 @@ namespace sdfslam {
     class SignedDistanceField {
 
     public:
-
 
         SignedDistanceField();
 
@@ -155,7 +157,8 @@ namespace sdfslam {
 
     protected:
 
-        AbstractMap* amap;
+        AbstractMap* map_;
+        AbstractRegistration* registration_;
 
         ros::ServiceServer serviceSaveMap;
         ros::ServiceServer serviceLoadMap;

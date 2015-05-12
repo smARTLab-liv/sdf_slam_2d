@@ -35,7 +35,9 @@ namespace sdfslam{
             ros::NodeHandle private_nh("~");
             private_nh.param("p_grid_res_", p_grid_res_, 0.05);
             private_nh.param("p_map_size_y_", p_map_size_y_, 15);
+            p_map_size_y_ /= p_grid_res_;
             private_nh.param("p_map_size_x_", p_map_size_x_, 15);
+            p_map_size_x_ /= p_grid_res_;
             private_nh.param("p_min_range_", p_min_range_, 0.15);
             private_nh.param("p_max_range_", p_max_range_, 5.6);
             private_nh.param("p_avg_range_", p_avg_range_, 0);
@@ -54,17 +56,15 @@ namespace sdfslam{
 
             epsilon_ = 0.0000001;
             std::cout << "Map constructor finished" << std::endl;
-        };
+        }
 
 
         ~SDFVectorMap(){
-        };
+        }
 
 
-        bool update_map(const PCLPointCloud& pc, const Eigen::Vector3f& pose3d){
-            std::cout << "Map update called" << std::endl;
+        void update_map(const PCLPointCloud& pc, const Eigen::Vector3f& pose3d){
             //group scan endpoints
-
             PCLPointCloud::const_iterator it = pc.begin();
             int p_scan_rays_ = pc.width * pc.height; //todo find/use lower bound instead
             float points[p_scan_rays_][2];
@@ -175,11 +175,230 @@ namespace sdfslam{
                     update_cells(pos, points, 2, point_window, sdf_);
                 }
             }
-        };
+        }
 
-        int get_map_gradients(){
 
-        };
+        int get_map_values(const Eigen::Vector2f& coords, float *mpdxdy, bool fine) {
+            mpdxdy[0] = 0.0;
+            mpdxdy[1] = 0.0;
+            mpdxdy[2] = 0.0;
+
+            float scaledCoords[2] = {coords[0], coords[1]};
+            util::toMap(scaledCoords, p_grid_res_,p_map_size_x_,p_map_size_y_);
+            scaledCoords[0] = scaledCoords[0] - 0.5;
+            scaledCoords[1] = scaledCoords[1] - 0.5;
+            int indMin[2] = {floor(scaledCoords[0]), floor(scaledCoords[1])};
+
+            float factors[2] = {(scaledCoords[0] - indMin[0]), (scaledCoords[1] - indMin[1])};
+
+            float intensities[4];
+            int indices[2];
+            for (int i = 0; i < 4; i++) {
+                indices[0] = indMin[0] + i % 2;
+                indices[1] = indMin[1] + i / 2;
+                if (indices[0] >= 0 && indices[0] <= p_map_size_x_ && indices[1] >= 0 && indices[1] <= p_map_size_y_)
+                    intensities[i] = sdf_[indices[1]][indices[0]];
+                else {
+                    ROS_ERROR("map too small, inds %d %d map size %d %d", indices[0], indices[1], p_map_size_x_, p_map_size_x_);
+                    ROS_ERROR("coords %f %f", coords[0], coords[1]);
+                }
+            }
+
+            //check for sgn changes NESW
+            //203
+            //3x1
+            //021
+            int numChanges = 0;
+            float px[4];
+            float py[4];
+            if ((intensities[2] < 0 && intensities[3] > 0) || (intensities[3] < 0 && intensities[2] > 0)) {
+                px[numChanges] = -intensities[2] / (intensities[3] - intensities[2]);
+                py[numChanges] = 1;
+                numChanges++;
+            }
+            if ((intensities[1] < 0 && intensities[3] > 0) || (intensities[3] < 0 && intensities[1] > 0)) {
+                px[numChanges] = 1;
+                py[numChanges] = -intensities[1] / (intensities[3] - intensities[1]);
+                numChanges++;
+            }
+            if ((intensities[0] < 0 && intensities[1] > 0) || (intensities[1] < 0 && intensities[0] > 0)) {
+                px[numChanges] = -intensities[0] / (intensities[1] - intensities[0]);
+                py[numChanges] = 0;
+                numChanges++;
+            }
+            if ((intensities[0] < 0 && intensities[2] > 0) || (intensities[2] < 0 && intensities[0] > 0)) {
+                px[numChanges] = 0;
+                py[numChanges] = -intensities[0] / (intensities[2] - intensities[0]);
+                numChanges++;
+            }
+
+
+            bool allZero = true;
+            for (int count = 0; count < 4; count++)
+                if (intensities[count] != 0) {
+                    allZero = false;
+                }
+                else
+                    numChanges = 6;
+
+            //unclean tho
+            if (!fine && numChanges == 0) {
+                //todo follow gradient anyways
+
+                if (!allZero) {
+                    if (intensities[0] < 0) {
+                        mpdxdy[1] = -((intensities[2] - intensities[3]) * factors[1] +
+                                      (1 - factors[1]) * (intensities[0] - intensities[1]));
+                        mpdxdy[2] = -((intensities[0] - intensities[2]) * factors[0] +
+                                      (1 - factors[0]) * (intensities[1] - intensities[3]));
+                    }
+                    else {
+                        mpdxdy[1] = ((intensities[2] - intensities[3]) * factors[1] +
+                                     (1 - factors[1]) * (intensities[0] - intensities[1]));
+                        mpdxdy[2] = ((intensities[0] - intensities[2]) * factors[0] +
+                                     (1 - factors[0]) * (intensities[1] - intensities[3]));
+                    }
+                    mpdxdy[0] = factors[1] * (factors[0] * intensities[3] + (1 - factors[0]) * intensities[2])
+                                + (1 - factors[1]) * (factors[0] * intensities[1] + (1 - factors[0]) * intensities[0]);
+                    mpdxdy[0] = fabs(mpdxdy[0]);
+                    if (fabs(mpdxdy[1]) > fabs(mpdxdy[2])) {
+                        if (mpdxdy[1] > 0)
+                            mpdxdy[1] = 1;
+                        else
+                            mpdxdy[1] = -1;
+                    }
+                    else {
+                        if (mpdxdy[2] > 0)
+                            mpdxdy[2] = 1;
+                        else
+                            mpdxdy[2] = -1;
+                    }
+
+                    //cap the gradient at 1 todo experiment with that
+                    if (mpdxdy[0] > p_grid_res_)
+                        mpdxdy[0] = p_grid_res_;
+                }
+                else {
+                    mpdxdy[0] = 0;
+                    mpdxdy[1] = 0;
+                    mpdxdy[2] = 0;
+                }
+            }
+
+            //42:
+            //y = mx + b
+            //           yhit
+            //         p1 |
+            //yCoord--2-\-|----3
+            //        |  \|    |
+            //xhit--------\    |
+            //        | x  \   |
+            //        |    |\  |
+            //        O----|-\-1
+            //             | p0
+            //           xCoord
+            //
+            //todo use vector form ffs
+
+            if (numChanges == 2) {
+                bool vertical;
+                float m, b;
+                float hit[2];
+                float yCoord, xCoord;
+                if (fabs(px[1] - px[0]) < epsilon_) {
+                    vertical = true;
+                    hit[0] = px[0];
+                    hit[1] = factors[1];
+                    yCoord = hit[1];
+                    xCoord = hit[0];
+                }
+                else {
+                    if (fabs(py[1] - py[0]) < epsilon_) {
+                        //horizontal
+                        m = 0;
+                        hit[0] = factors[0];
+                        hit[1] = py[0];
+                        b = py[0];
+                    }
+                    else {
+                        m = (py[1] - py[0]) / (px[1] - px[0]);
+                        b = py[0] - m * px[0];
+                        hit[0] = (b - factors[1] + 1 / m * factors[0]) / (-1 / m - m);
+                        hit[1] = hit[0] * m + b;
+                    }
+                }
+
+                if (!vertical) {
+                    mpdxdy[0] = util::p2lDist(m, b, factors); //dunno
+                    yCoord = factors[0] * m + b;
+
+                    if (!m == 0)
+                        xCoord = (factors[1] - b) / m;
+                    else
+                        //xCoord = factors[0];
+                        xCoord = 999999;
+                    //todo! not sure if this makes sense, not needed for vector form anyways though
+
+                    if (factors[0] > xCoord)
+                        mpdxdy[1] = -(1-xCoord);
+                        //mpdxdy[1] = -1;
+                    else
+                        mpdxdy[1] = xCoord;
+                        //mpdxdy[1] = 1;
+
+                    if (factors[1] > yCoord)
+                        mpdxdy[2] = -(1-yCoord);
+                        //mpdxdy[2] = -1;
+                    else
+                        mpdxdy[2] = yCoord;
+                        //mpdxdy[2] = 1;
+
+                    if (yCoord < 0 || yCoord > 1)
+                        mpdxdy[2] = 0;
+
+                    if (xCoord < 0 || xCoord > 1)
+                        mpdxdy[1] = 0;
+
+                }
+                else {
+                    //todo replace cases with 1 solution..
+                    // ROS_WARN("VERTICAL");
+                    if (factors[0] < px[0])
+                        mpdxdy[1] = px[0];
+                        //mpdxdy[1] = 1;
+                    else
+                        mpdxdy[1] = px[0]-1;
+                        //mpdxdy[1] = -1;
+
+                    mpdxdy[0] = fabs(factors[0] - px[0]);
+                    mpdxdy[2] = 0;
+                }
+
+                mpdxdy[0] = mpdxdy[0] / (1 / p_grid_res_);
+
+                //mpdxdy[0] = util::round(mpdxdy[0], 32);
+                //mpdxdy[1] = util::round(mpdxdy[1], 32);
+                //mpdxdy[2] = util::round(mpdxdy[2], 32);
+
+                if (mpdxdy[1] < epsilon_ && mpdxdy[1] > -epsilon_) {
+                    //ROS_ERROR("asxaxaxax");
+                    mpdxdy[1] = 0;
+                }
+                if (mpdxdy[2] < epsilon_ && mpdxdy[2] > -epsilon_) {
+                    //ROS_ERROR("asxaxaxax");
+                    mpdxdy[2] = 0;
+                }
+
+            }
+
+            if (numChanges == 4) {
+                mpdxdy[1] = 0;
+                mpdxdy[2] = 0;
+                mpdxdy[0] = 0;
+            }
+
+            return numChanges / 2;
+        }
 
     protected:
 

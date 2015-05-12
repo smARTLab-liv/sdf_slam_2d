@@ -16,28 +16,18 @@
 //51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 //=================================================================================================
 
-#ifndef SDF_SLAM_2D_ABSTRACTMAP_H
-#define SDF_SLAM_2D_ABSTRACTMAP_H
+#ifndef SDF_SLAM_2D_ABSTRACTREGISTRATION_H
+#define SDF_SLAM_2D_ABSTRACTREGISTRATION_H
 
 #include "../utility/Types.h"
 
-
 namespace sdfslam{
 
-
-    class AbstractMap {
+    class AbstractRegistration {
 
     public:
 
-       //virtual AbstractMap(unsigned long p_map_size_x, unsigned long p_map_size_y){};
-
-       // virtual ~AbstractMap(){};
-
-
-        virtual void update_map(const PCLPointCloud& pc, const Eigen::Vector3f& pose3d){};
-
-        //returns case if scan endpoint is within grid res range of wall
-        virtual int get_map_values(const Eigen::Vector2f& coords, float *mpdxdy, bool fine){};
+        virtual Eigen::Vector3f new_match(const PCLPointCloud& scan, AbstractMap* const aMap, int* case_count, Eigen::Vector3f pos){};
 
     protected:
 
@@ -45,4 +35,5 @@ namespace sdfslam{
 
 }
 
-#endif //SDF_SLAM_2D_ABSTRACTMAP_H
+
+#endif //SDF_SLAM_2D_ABSTRACTREGISTRATION_H
