@@ -2,12 +2,12 @@
 	
 	<include file="$(find stdr_robot)/launch/robot_manager.launch" />
 	
-	<node type="stdr_server_node" pkg="stdr_server" name="stdr_server" output="screen" args="$(find sdf_slam)/stdr_resources/maps/test.yaml"/>
+	<node type="stdr_server_node" pkg="stdr_server" name="stdr_server" output="screen" args="$(find sdf_slam_2d)/stdr_resources/maps/test.yaml"/>
 
 	<node pkg="tf" type="static_transform_publisher" name="world2map" args="0 0 0 0 0 0  world map 100" />
 	
 	<include file="$(find stdr_gui)/launch/stdr_gui.launch"/>
 	
-	<node pkg="stdr_robot" type="robot_handler" name="$(anon robot_spawn)" args="add $(find sdf_slam)/stdr_resources/robots/pandora_robot.yaml 2.5 2.5 0" />
+	<node pkg="stdr_robot" type="robot_handler" name="$(anon robot_spawn)" args="add $(find sdf_slam_2d)/stdr_resources/robots/pandora_robot.yaml 2.5 2.5 0" />
 
 </launch>
