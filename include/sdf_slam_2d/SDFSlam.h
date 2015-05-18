@@ -22,6 +22,8 @@
 
 #include "map/AbstractMap.h"
 #include "map/VectorMap.h"
+#include "map/OccupancyGrid.h"
+
 
 #include "registration/AbstractRegistration.h"
 #include "registration/GaussNewton.h"
@@ -39,7 +41,6 @@
 #include "geometry_msgs/PoseStamped.h"
 #include "sensor_msgs/LaserScan.h"
 #include "sensor_msgs/PointCloud2.h"
-#include "visualization_msgs/Marker.h"
 #include "nav_msgs/OccupancyGrid.h"
 
 #include <std_srvs/Empty.h>
@@ -102,9 +103,9 @@ namespace sdfslam {
 //
 //        float p2lsDist2(float *v, float *w, float *p);
 
-        inline float xVal(float y, float m, float b);
+      //  inline float xVal(float y, float m, float b);
 
-        inline float yVal(float x, float m, float b);
+        //inline float yVal(float x, float m, float b);
 
         bool checkTimeout();
 
@@ -158,7 +159,9 @@ namespace sdfslam {
     protected:
 
         AbstractMap* map_;
+        AbstractMap* visualization_map_;
         AbstractRegistration* registration_;
+
 
         ros::ServiceServer serviceSaveMap;
         ros::ServiceServer serviceLoadMap;
@@ -188,7 +191,7 @@ namespace sdfslam {
         ros::Publisher iso_pub_;
         ros::Publisher cloudA_pub_;
         ros::Publisher cloudB_pub_;
-        ros::Publisher marker_pub_;
+
 
         tf::TransformListener tf_;
         tf::TransformBroadcaster tfbr_;

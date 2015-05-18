@@ -22,8 +22,11 @@
 #include "AbstractMap.h"
 
 #include <iostream>
+#include <fstream>
 #include "../utility/UtilityFunctions.h"
 #include "ros/ros.h"
+#include "visualization_msgs/Marker.h"
+
 
 namespace sdfslam{
 
@@ -43,7 +46,10 @@ namespace sdfslam{
             private_nh.param("p_avg_range_", p_avg_range_, 0);
             private_nh.param("p_update_map_aoe_", p_update_map_aoe_, 5);
             private_nh.param("p_avg_mapping_", p_avg_mapping_, false);
+            private_nh.param<std::string>("p_fixed_frame_", p_fixed_frame_, "/map");
 
+
+            marker_pub_ = nh_.advertise<visualization_msgs::Marker>("sdf_wall_marker", 10);
 
             VecMapFloat sdf((unsigned long) p_map_size_x_, std::vector<float>((unsigned long) p_map_size_y_, 0.0));
             sdf_ = sdf;
@@ -62,6 +68,141 @@ namespace sdfslam{
         ~SDFVectorMap(){
         }
 
+        void publish_map(){
+            visualization_msgs::Marker cube_list, line_list, sphere_list;
+            sphere_list.header.frame_id = cube_list.header.frame_id = line_list.header.frame_id = p_fixed_frame_;
+            sphere_list.header.stamp = cube_list.header.stamp = line_list.header.stamp = ros::Time::now();
+            sphere_list.ns = cube_list.ns = line_list.ns = "sdf_wall_marker";
+            sphere_list.pose.orientation.w = cube_list.pose.orientation.w = line_list.pose.orientation.w = 1.0;
+            sphere_list.action = cube_list.action = line_list.action = visualization_msgs::Marker::ADD;
+
+            sphere_list.id = 1;
+            cube_list.id = 1;
+            line_list.id = 2;
+
+            cube_list.type = visualization_msgs::Marker::CUBE_LIST;
+            line_list.type = visualization_msgs::Marker::LINE_LIST;
+            sphere_list.type = visualization_msgs::Marker::SPHERE_LIST;
+
+            cube_list.scale.x = 2 * p_grid_res_;
+            cube_list.scale.y = 2 * p_grid_res_;
+            cube_list.scale.z = p_grid_res_ / 2;
+
+            line_list.scale.x = p_grid_res_;
+
+            sphere_list.scale.x = p_grid_res_;
+            sphere_list.scale.y = p_grid_res_;
+
+            line_list.color.r = 0.0;
+            line_list.color.g = 0.0;
+            line_list.color.b = 0.0;
+            line_list.color.a = 1.0;
+
+            sphere_list.color.r = 0.0;
+            sphere_list.color.g = 0.0;
+            sphere_list.color.b = 0.0;
+            sphere_list.color.a = 1.0;
+
+            cube_list.color.r = 0.5;
+            cube_list.color.g = 0.5;
+            cube_list.color.b = 0.5;
+            cube_list.color.a = 1;
+
+            //todo code copy..
+            int indMin[2];
+            float intensities[4];
+            int indices[2];
+            for (int i = 0; i < p_map_size_x_ - 1; i++)
+                for (int j = 0; j < p_map_size_y_ - 1; j++) {
+
+                    indMin[0] = i;
+                    indMin[1] = j;
+
+                    for (int k = 0; k < 4; k++) {
+                        indices[0] = indMin[0] + k % 2;
+                        indices[1] = indMin[1] + k / 2;
+                        if (indices[0] >= 0 && indices[0] <= p_map_size_x_ && indices[1] >= 0 && indices[1] <= p_map_size_y_)
+                            intensities[k] = sdf_[indices[1]][indices[0]];
+                        else {
+                            ROS_ERROR("map too small, inds %d %d map size %d %d", indices[0], indices[1], p_map_size_x_,
+                                      p_map_size_x_);
+                        }
+                    }
+
+                    bool allZero = true;
+                    for (int count = 0; count < 4; count++)
+                        if (intensities[count] != 0) {
+                            allZero = false;
+                        }
+                    if (allZero) {
+                        continue;
+                    }
+                    //check for sgn changes NESW
+                    //203
+                    //3x1
+                    //021
+                    int numChanges = 0;
+                    float px[4];
+                    float py[4];
+                    if ((intensities[2] < 0 && intensities[3] > 0) || (intensities[3] < 0 && intensities[2] > 0)) {
+                        px[numChanges] = -intensities[2] / (intensities[3] - intensities[2]);
+                        py[numChanges] = 1;
+                        numChanges++;
+                    }
+                    if ((intensities[1] < 0 && intensities[3] > 0) || (intensities[3] < 0 && intensities[1] > 0)) {
+                        px[numChanges] = 1;
+                        py[numChanges] = -intensities[1] / (intensities[3] - intensities[1]);
+                        numChanges++;
+                    }
+                    if ((intensities[0] < 0 && intensities[1] > 0) || (intensities[1] < 0 && intensities[0] > 0)) {
+                        px[numChanges] = -intensities[0] / (intensities[1] - intensities[0]);
+                        py[numChanges] = 0;
+                        numChanges++;
+                    }
+                    if ((intensities[0] < 0 && intensities[2] > 0) || (intensities[2] < 0 && intensities[0] > 0)) {
+                        px[numChanges] = 0;
+                        py[numChanges] = -intensities[0] / (intensities[2] - intensities[0]);
+                        numChanges++;
+                    }
+
+                    double aPoint[2];
+                    geometry_msgs::Point p;
+                    if (numChanges == 2) {
+                        for (int j = 0; j < numChanges; j++) {
+                            aPoint[0] = indMin[0] + px[j] + 0.5;
+                            aPoint[1] = indMin[1] + py[j] + 0.5;
+                            util::toRl(aPoint, p_grid_res_, p_map_size_x_, p_map_size_y_);
+                            p.x = aPoint[0]; //(int32_t)
+                            p.y = aPoint[1];
+                            //p.x = 1;
+                            //p.y = 2;
+                            p.z = 0;
+                            line_list.points.push_back(p);
+                            sphere_list.points.push_back(p);
+                        }
+                    }
+                    else if (numChanges == 0) {
+                        if (intensities[0] > 0) {
+                            aPoint[0] = indMin[0] + 1;
+                            aPoint[1] = indMin[1] + 1;
+                            util::toRl(aPoint,p_grid_res_,p_map_size_x_,p_map_size_y_);
+                            p.x = aPoint[0]; //(int32_t)
+                            p.y = aPoint[1];
+
+                            p.z = -0.1;
+                            cube_list.points.push_back(p);
+                        }
+                    }
+                    else {
+                    }
+                }
+
+
+            marker_pub_.publish(line_list);
+            marker_pub_.publish(sphere_list);
+            //marker_pub_.publish(cube_list);
+
+        }
 
         void update_map(const PCLPointCloud& pc, const Eigen::Vector3f& pose3d){
             //group scan endpoints
@@ -177,6 +318,16 @@ namespace sdfslam{
             }
         }
 
+        void reset_map(){
+            VecMapFloat sdf((unsigned long) p_map_size_x_, std::vector<float>((unsigned long) p_map_size_y_, 0.0));
+            sdf_ = sdf;
+
+            VecMapInt sdf_level((unsigned long) p_map_size_x_, std::vector<int>((unsigned long) p_map_size_y_, 0));
+            sdf_level_ = sdf_level;
+
+            VecMapInt sdf_count((unsigned long) p_map_size_x_, std::vector<int>((unsigned long) p_map_size_y_, 0));
+            sdf_count_ = sdf_count;
+        }
 
         int get_map_values(const Eigen::Vector2f& coords, float *mpdxdy, bool fine) {
             mpdxdy[0] = 0.0;
@@ -585,6 +736,43 @@ namespace sdfslam{
             }
         }
 
+
+        void save_map(std::string filename) {
+            std::fstream os(filename.c_str(), std::ios::out | std::ios::app);
+
+            for (int i = 0; i < p_map_size_y_; ++i) {
+                for (int j = 0; j < p_map_size_x_; ++j) {
+                    os << sdf_[i][j] << " ";
+                }
+                os << "\n";
+            }
+
+            os.close();
+        }
+
+        //mapsize dubdidu
+        void load_map(std::string filename) {
+            std::string word;
+            std::ifstream myfile(filename.c_str());
+            if (myfile.is_open()) {
+                int xC = 0;
+                int yC = 0;
+                while (myfile >> word) {
+                    sdf_[xC][yC] = (float) atof(word.c_str());
+                    if (xC < p_map_size_y_ - 1)
+                        xC++;
+                    else {
+                        xC = 0;
+                        yC++;
+                    }
+                }
+                myfile.close();
+            }
+            else
+                ROS_ERROR("Unable to open file");
+        }
+
+
         bool invertCheck(float *src, float *tar, float border[2][2]) {
             float x1 = src[0];
             float y1 = src[1];
@@ -611,6 +799,8 @@ namespace sdfslam{
                 return true;
         }
 
+        ros::NodeHandle nh_;
+
         VecMapFloat sdf_;
         VecMapInt sdf_level_;
         VecMapInt sdf_count_;
@@ -623,6 +813,8 @@ namespace sdfslam{
         int p_avg_range_;
         bool p_avg_mapping_;
         int p_update_map_aoe_;
+        ros::Publisher marker_pub_;
+        std::string p_fixed_frame_;
 
 
     };

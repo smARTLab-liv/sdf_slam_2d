@@ -22,6 +22,7 @@
 #include "Types.h"
 #include <cmath>
 #include <Eigen/Geometry>
+#include "ros/ros.h"
 
 namespace util{
 
@@ -41,6 +42,18 @@ namespace util{
             ceil(Zahl - 0.5);
         Zahl /= pow(10, Stellen);
         return Zahl;
+    }
+
+    inline float xVal(float y, float m, float b) {
+        if (m != 0)
+            return (y - b) / m;
+        else
+            ROS_ERROR("div by 0");
+        return 0;
+    }
+
+    inline float yVal(float x, float m, float b) {
+        return m * x + b;
     }
 
     inline float p2pDist(float p1x, float p1y, float* p2){

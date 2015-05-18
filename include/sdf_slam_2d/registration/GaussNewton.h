@@ -1,6 +1,10 @@
 //=================================================================================================
 //Copyright (C) 2015, Joscha Fossel
 //
+//Gauss Newton minimization registration extended from Hector SLAM:
+//https://github.com/tu-darmstadt-ros-pkg/hector_slam
+//Copyright (c) 2011, Stefan Kohlbrecher, TU Darmstadt
+//
 //This program is free software; you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
 //the Free Software Foundation; either version 2 of the License, or
