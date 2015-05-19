@@ -27,7 +27,7 @@ namespace sdfslam{
 
     public:
 
-        virtual Eigen::Vector3f new_match(const PCLPointCloud& scan, AbstractMap* const aMap, int* case_count, Eigen::Vector3f pos){};
+        virtual Eigen::Vector3d new_match(const PCLPointCloud& scan, AbstractMap* const aMap, int* case_count, Eigen::Vector3d pos){};
 
     protected:
 

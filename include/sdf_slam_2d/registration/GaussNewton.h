@@ -41,7 +41,7 @@ namespace sdfslam{
             private_nh.param("p_num_iter_", p_num_iter_, 30);
         }
 
-        Eigen::Vector3f new_match(const PCLPointCloud& scan, AbstractMap* const aMap, int* case_count, const Eigen::Vector3f pos){
+        Eigen::Vector3d new_match(const PCLPointCloud& scan, AbstractMap* const aMap, int* case_count, const Eigen::Vector3d pos){
             ros::Time start = ros::Time::now();
             ros::Time end;
             ros::Duration dur;
@@ -54,8 +54,8 @@ namespace sdfslam{
             float searchfacs[3] = {1, 1, p_num_iter_ / 3}; //todo magic
             //float searchfacs[3] = { 1, 1, 1};
             bool interrupted = false;
-            Eigen::Vector3f pose_estimate(0, 0, 0);
-            Eigen::Vector3f temp_pose_estimate(0, 0, 0);
+            Eigen::Vector3d pose_estimate(0, 0, 0);
+            Eigen::Vector3d temp_pose_estimate(0, 0, 0);
             bool breaking = true;
             for (int i = 0; i < p_num_iter_; ++i) {
                 end = ros::Time::now();
@@ -84,11 +84,11 @@ namespace sdfslam{
                         breaking = false;
                     }
                 }
-                temp_pose_estimate = Eigen::Vector3f(pose_estimate);
+                temp_pose_estimate = Eigen::Vector3d(pose_estimate);
 
                 if (interrupted) {
                     if (pose_estimate[0] != pose_estimate[0])
-                        pose_estimate = Eigen::Vector3f(0, 0, 0);
+                        pose_estimate = Eigen::Vector3d(0, 0, 0);
                     i = p_num_iter_ / 2;
                     continue;
                 }
@@ -106,13 +106,13 @@ namespace sdfslam{
         }
 
     protected:
-        bool estimateTransformationLogLh(Eigen::Vector3f &estimate,
+        bool estimateTransformationLogLh(Eigen::Vector3d &estimate,
                                          const PCLPointCloud &cloud,
                                          float *searchfacs,
                                          AbstractMap* const aMap,
                                          int *case_count,
                                          bool fine,
-                                         Eigen::Vector3f pos) {
+                                         Eigen::Vector3d pos) {
             //getCompleteHessianDerivs(estimate, cloud, H, dTr, aMap, false);
             //std::cout << H << std::endl << dTr << std::endl <<H.inverse() << std::endl;
             //if (true || (H(0, 0) == 0.0f) || (H(1, 1) == 0.0f)) { //todo wtf
@@ -133,7 +133,7 @@ namespace sdfslam{
             //  if ((determinant!=0 && determinant==determinant) && (H(0, 0) != 0.0f) && (H(1, 1) != 0.0f)) {
             if ((determinant != 0) && (H(0, 0) != 0.0f) && (H(1, 1) != 0.0f)) {
 
-                Eigen::Vector3f t_searchDir(H.inverse() * dTr);
+                Eigen::Vector3d t_searchDir(H.inverse() * dTr);
                 float searchDir[3] = {t_searchDir[0], t_searchDir[1], t_searchDir[2]};
                 //float searchDir[3] = {t_searchDir[0], t_searchDir[1], 0};
 
@@ -231,22 +231,22 @@ namespace sdfslam{
 
             return false;
         }
-        void getCompleteHessianDerivs(const Eigen::Vector3f &pose,
+        void getCompleteHessianDerivs(const Eigen::Vector3d &pose,
                                       const PCLPointCloud &cloud,
-                                      Eigen::Matrix3f &H,
-                                      Eigen::Vector3f &dTr,
+                                      Eigen::Matrix3d &H,
+                                      Eigen::Vector3d &dTr,
                                       AbstractMap* const aMap,
                                       int *case_count,
                                       bool fine,
-                                      Eigen::Vector3f pos) {
+                                      Eigen::Vector3d pos) {
             float yaw = pose[2] + pos[2];
             float x = pose[0] + pos[0];
             float y = pose[1] + pos[1];
             float sinRot = sin(yaw);
             float cosRot = cos(yaw);
 
-            H = Eigen::Matrix3f::Zero();
-            dTr = Eigen::Vector3f::Zero();
+            H = Eigen::Matrix3d::Zero();
+            dTr = Eigen::Vector3d::Zero();
 
             double t_H[3][3] = {{0, 0, 0},
                                 {0, 0, 0},
@@ -281,8 +281,8 @@ namespace sdfslam{
                 //ROS_WARN("x %f y %f, yaw %f, point x %f point y %f", x, y, yaw, currPoint[0], currPoint[1]);
                 //Eigen::Affine2d tfForState = Eigen::Translation2d(x, y) * Eigen::Rotation2Dd(yaw);
 
-                Eigen::Affine2f tfForState = Eigen::Translation2f(x, y) * Eigen::Rotation2Df(yaw);
-                Eigen::Vector2f transformedCoords(tfForState * Eigen::Vector2f(currPoint[0], currPoint[1]));
+                Eigen::Affine2d tfForState = Eigen::Translation2d(x, y) * Eigen::Rotation2Dd(yaw);
+                Eigen::Vector2d transformedCoords(tfForState * Eigen::Vector2d(currPoint[0], currPoint[1]));
 
                 //if (it == cloud.begin()) {
                 //Eigen::Vector2f test(tfForState*Eigen::Vector2f(currPoint[0], currPoint[1]));
@@ -298,7 +298,7 @@ namespace sdfslam{
 
                 //mapValues(transformedCoords.cast<float>(), aMap, transformedPointData);
                 //case_count[mapValues(transformedCoords.cast<float>(), aMap, transformedPointData, fine)]++;
-                case_count[aMap->get_map_values(transformedCoords.cast<float>(), transformedPointData, fine)]++;
+                case_count[aMap->get_map_values(transformedCoords.cast<double>(), transformedPointData, fine)]++;
 
                 //mapValues(transformedCoords.cast<float>(), aMap, transformedPointData, fine);
 
@@ -344,8 +344,8 @@ namespace sdfslam{
         double tempYaw_;
         bool converged_;
         bool searchdirplus[3];
-        Eigen::Matrix3f H;
-        Eigen::Vector3f dTr;
+        Eigen::Matrix3d H;
+        Eigen::Vector3d dTr;
         bool map_flag_;
         int not_converged_counter_;
 

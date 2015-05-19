@@ -20,30 +20,29 @@
 #include "SDFSlam.h"
 
 int main(int argc, char* argv[] ) {
-  ros::init(argc, argv, "sdf_2d");
-  ros::NodeHandle nh("main");
+    ros::init(argc, argv, "sdf_2d");
+    ros::NodeHandle nh("sdf_main");
 
+    ros::NodeHandle private_nh("~");
+    bool p_bag_mode;
+    private_nh.param("p_bag_mode", p_bag_mode, false);
 
-  ros::NodeHandle private_nh("~");
-  bool p_bag_mode;
-  private_nh.param("p_bag_mode", p_bag_mode, false);
+    sdfslam::SignedDistanceField sdf;
 
-  sdfslam::SignedDistanceField sdf;
+    if (!p_bag_mode)
+        ros::spin();
+    else {
+        bool cont = true;
+        unsigned int microseconds = 10000;
 
-  if (!p_bag_mode)
-    ros::spin();
-  else {
-    bool cont = true;
-    unsigned int microseconds = 10000;
-
-    while (ros::ok && cont) {
-      cont = sdf.checkTimeout();
-      ros::spinOnce();
-      usleep(microseconds);
+        while (ros::ok && cont) {
+            cont = sdf.checkTimeout();
+            ros::spinOnce();
+            usleep(microseconds);
+        }
     }
-  }
-  ROS_INFO("shutting down sdf slam..");
+    ROS_INFO("shutting down sdf slam..");
 
-  return 0;
+    return 0;
 }
 

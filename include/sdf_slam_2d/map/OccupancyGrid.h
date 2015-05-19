@@ -78,7 +78,7 @@ namespace sdfslam{
             occ_map_pub_.publish(mapGrid);
         };
 
-        void update_map(const PCLPointCloud& pc, const Eigen::Vector3f& pose3d){
+        void update_map(const PCLPointCloud& pc, const Eigen::Vector3d& pose3d){
             PCLPointCloud::const_iterator it = pc.begin();
             while (it < pc.end()) {
                 Eigen::Vector2d a_point(it->x, it->y);
@@ -152,7 +152,6 @@ namespace sdfslam{
                 }
             }
         }
-
 
         VecMapFloat occ_map_;
         ros::Publisher occ_map_pub_;

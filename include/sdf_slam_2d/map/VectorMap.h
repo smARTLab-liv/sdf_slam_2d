@@ -204,11 +204,11 @@ namespace sdfslam{
 
         }
 
-        void update_map(const PCLPointCloud& pc, const Eigen::Vector3f& pose3d){
+        void update_map(const PCLPointCloud& pc, const Eigen::Vector3d& pose3d){
             //group scan endpoints
             PCLPointCloud::const_iterator it = pc.begin();
-            int p_scan_rays_ = pc.width * pc.height; //todo find/use lower bound instead
-            float points[p_scan_rays_][2];
+            int scan_rays = pc.width * pc.height; //todo find/use lower bound instead
+            float points[scan_rays][2];
             float a_point_in_rl[2];
             float a_point_in_map[2];
             float point_window[2];
@@ -250,7 +250,7 @@ namespace sdfslam{
                 i = 0;
                 while (cont) {
 
-                    if (i >= p_scan_rays_) {
+                    if (i >= scan_rays) {
                         ROS_ERROR("TOO MANY SCAN ENDPOINTS, THIS SHOULD NOT HAVE HAPPENED, VectorMap.h");
                     }
 
@@ -329,7 +329,7 @@ namespace sdfslam{
             sdf_count_ = sdf_count;
         }
 
-        int get_map_values(const Eigen::Vector2f& coords, float *mpdxdy, bool fine) {
+        int get_map_values(const Eigen::Vector2d& coords, float *mpdxdy, bool fine) {
             mpdxdy[0] = 0.0;
             mpdxdy[1] = 0.0;
             mpdxdy[2] = 0.0;
@@ -750,7 +750,7 @@ namespace sdfslam{
             os.close();
         }
 
-        //mapsize dubdidu
+
         void load_map(std::string filename) {
             std::string word;
             std::ifstream myfile(filename.c_str());
@@ -772,6 +772,202 @@ namespace sdfslam{
                 ROS_ERROR("Unable to open file");
         }
 
+/*
+          void publish_map_cheap(bool updated) {
+              if (updated) {
+                  iso_map_.clear();
+                  //sdf_thresholded_.clear();
+                  cloud_map_.clear();
+
+                  int counter = 0;
+                  for (int i = 1; i < sdf_thresholded_.size() - 1; i++)
+                      for (int j = 1; j < sdf_thresholded_[0].size() - 1; j++)
+                          if (sdf_[i][j] < -p_isovalue_)
+                              sdf_thresholded_[i][j] = 1;
+                          else
+                              sdf_thresholded_[i][j] = 0;
+
+
+                  for (int i = 1; i < sdf_thresholded_.size() - 1; i++) {
+                      for (int j = 1; j < sdf_thresholded_[0].size() - 1; j++) {
+                          if (sdf_thresholded_[i][j] == 1) {
+                              Eigen::Vector2f coord(j + 0.5, i + 0.5);
+                              coord = util::toRl(coord, p_grid_res_, p_map_size_x_, p_map_size_y_);
+                              iso_map_.push_back(util::genPoint(coord.x(), coord.y()));
+                              counter++;
+                          }
+                          //}//del
+                          //}//del if unmcomment
+                          //}//del if
+
+                          int state = 0;
+                          if (sdf_thresholded_[i][j] == 1)
+                              state += 8;
+                          if (sdf_thresholded_[i][j + 1] == 1)
+                              state += 4;
+                          if (sdf_thresholded_[i - 1][j + 1] == 1)
+                              state += 2;
+                          if (sdf_thresholded_[i - 1][j] == 1)
+                              state += 1;
+
+                          // double yPos = (i+0.5-p_map_size_y_/2)*p_grid_res_;
+                          // double xPos = (j+0.5-p_map_size_x_/2)*p_grid_res_;
+                          Eigen::Vector2f coord(j, i);
+                          coord = util::toRl(coord, p_grid_res_, p_map_size_x_, p_map_size_y_);
+                          double yPos = coord.y() + p_grid_res_ / 2;//(i-p_map_size_y_/2)*p_grid_res_;
+                          double xPos = coord.x() + p_grid_res_ / 2;//(j-p_map_size_x_/2)*p_grid_res_;
+
+                          // cloud_map_.width = counter * 6;
+                          // cloud_map_.height   = 1;
+                          // cloud_map_.is_dense = false;
+                          // //	cloud_map_.points.resize(cloud_map_.width * cloud_map_.height);
+
+                          switch (state) {
+                              case 0:
+                                  break;
+
+                              case 1:
+                                  cloud_map_.push_back(util::genPoint(xPos, yPos - p_grid_res_ / 2));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_ / 2, yPos - p_grid_res_));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_ / 4, yPos - 3 * p_grid_res_ / 4));
+                                  break;
+
+                              case 2:
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_, yPos - p_grid_res_ / 2));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_ / 2, yPos - p_grid_res_));
+                                  cloud_map_.push_back(util::genPoint(xPos + 3 * p_grid_res_ / 4, yPos - 3 * p_grid_res_ / 4));
+                                  break;
+
+                              case 3:
+                                  cloud_map_.push_back(util::genPoint(xPos, yPos - p_grid_res_ / 2));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_ / 2, yPos - p_grid_res_ / 2));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_, yPos - p_grid_res_ / 2));
+                                  break;
+
+                              case 4:
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_ / 2, yPos));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_, yPos - p_grid_res_ / 2));
+                                  cloud_map_.push_back(util::genPoint(xPos + 3 * p_grid_res_ / 4, yPos - p_grid_res_ / 4));
+                                  break;
+
+                              case 5:
+                                  cloud_map_.push_back(util::genPoint(xPos, yPos - p_grid_res_ / 2));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_ / 2, yPos));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_ / 4, yPos - p_grid_res_ / 2));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_, yPos - p_grid_res_ / 2));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_ / 2, yPos - p_grid_res_));
+                                  cloud_map_.push_back(util::genPoint(xPos + 3 * p_grid_res_ / 4, yPos - 3 * p_grid_res_ / 4));
+                                  break;
+
+                              case 6:
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_ / 2, yPos));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_ / 2, yPos - p_grid_res_ / 2));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_ / 2, yPos - p_grid_res_));
+                                  break;
+
+                              case 7:
+                                  cloud_map_.push_back(util::genPoint(xPos, yPos - p_grid_res_ / 2));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_ / 2, yPos));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_ / 4, yPos - p_grid_res_ / 2));
+                                  break;
+
+                              case 8:
+                                  cloud_map_.push_back(util::genPoint(xPos, yPos - p_grid_res_ / 2));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_ / 2, yPos));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_ / 4, yPos - p_grid_res_ / 2));
+                                  break;
+
+                              case 9:
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_ / 2, yPos));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_ / 2, yPos - p_grid_res_ / 2));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_ / 2, yPos - p_grid_res_));
+                                  break;
+
+                              case 10:
+                                  cloud_map_.push_back(util::genPoint(xPos, yPos - p_grid_res_ / 2));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_ / 2, yPos - p_grid_res_));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_ / 4, yPos - 3 * p_grid_res_ / 4));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_ / 2, yPos));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_, yPos - p_grid_res_ / 2));
+                                  cloud_map_.push_back(util::genPoint(xPos + 3 * p_grid_res_ / 4, yPos - p_grid_res_ / 4));
+                                  break;
+
+                              case 11:
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_ / 2, yPos));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_, yPos - p_grid_res_ / 2));
+                                  cloud_map_.push_back(util::genPoint(xPos + 3 * p_grid_res_ / 4, yPos - p_grid_res_ / 4));
+                                  break;
+
+                              case 12:
+                                  cloud_map_.push_back(util::genPoint(xPos, yPos - p_grid_res_ / 2));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_ / 2, yPos - p_grid_res_ / 2));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_, yPos - p_grid_res_ / 2));
+                                  break;
+
+                              case 13:
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_, yPos - p_grid_res_ / 2));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_ / 2, yPos - p_grid_res_));
+                                  cloud_map_.push_back(util::genPoint(xPos + 3 * p_grid_res_ / 4, yPos - 3 * p_grid_res_ / 4));
+                                  break;
+
+                              case 14:
+                                  cloud_map_.push_back(util::genPoint(xPos, yPos - p_grid_res_ / 2));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_ / 2, yPos - p_grid_res_));
+                                  cloud_map_.push_back(util::genPoint(xPos + p_grid_res_ / 4, yPos - 3 * p_grid_res_ / 4));
+                                  break;
+
+                              case 15:
+                                  break;
+
+                              default:
+                                  ROS_WARN("this should not have happened, switch @ publish clud_map_ broken");
+                                  break;
+                          }
+                      }
+
+                  }
+              }
+              sensor_msgs::PointCloud2 cloudMsg;
+              pcl::toROSMsg(cloud_map_, cloudMsg);
+              cloudMsg.header.frame_id = p_fixed_frame_;
+              cloudMsg.header.stamp = ros::Time::now();
+              map_pub_.publish(cloudMsg);
+
+              //rm me
+              sensor_msgs::PointCloud2 isoMsg;
+              pcl::toROSMsg(iso_map_, isoMsg);
+              isoMsg.header.frame_id = p_fixed_frame_;
+              isoMsg.header.stamp = ros::Time::now();
+              iso_pub_.publish(isoMsg); //rm me
+
+              pcl::PointCloud<pcl::PointXYZ>::Ptr monster_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+              int insertAt = 0;
+              monster_cloud->width = p_map_size_x_ * p_map_size_y_;
+              monster_cloud->height = 1;
+              monster_cloud->is_dense = false;
+              monster_cloud->points.resize(monster_cloud->width * monster_cloud->height);
+              for (int i = 0; i < p_map_size_y_; i++) {
+                  for (int j = 0; j < p_map_size_x_; j++) {
+                      if (sdf_[i][j] != 0 && sdf_[i][j] < p_truncation_ && sdf_[i][j] > -p_truncation_) {
+                          monster_cloud->points[insertAt].z = sdf_[i][j];
+                          Eigen::Vector2f coord(j, i);
+                          coord = util::toRl(coord, p_grid_res_, p_map_size_x_, p_map_size_y_);
+                          monster_cloud->points[insertAt].x = p_grid_res_ / 2 + j * p_grid_res_ - (p_map_size_x_ / 2) * p_grid_res_;
+                          //monster_cloud->points[insertAt].x = coord.x()+p_grid_res_/2;
+                          monster_cloud->points[insertAt].y = p_grid_res_ / 2 + i * p_grid_res_ - (p_map_size_y_ / 2) * p_grid_res_;
+                          //monster_cloud->points[insertAt].y = coord.y()+p_grid_res_/2;
+                          insertAt++;
+                      }
+                  }
+              }
+              sensor_msgs::PointCloud2 cloudMsg2;
+              pcl::toROSMsg(*monster_cloud, cloudMsg2);
+              cloudMsg2.header.frame_id = p_fixed_frame_;
+              cloudMsg2.header.stamp = ros::Time::now();
+              cloudA_pub_.publish(cloudMsg2);
+
+          }
+*/
 
         bool invertCheck(float *src, float *tar, float border[2][2]) {
             float x1 = src[0];
@@ -816,7 +1012,14 @@ namespace sdfslam{
         ros::Publisher marker_pub_;
         std::string p_fixed_frame_;
 
-
+/*
+        map_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("pointcloud_map", 10);
+        iso_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("iso_map", 10);
+        cloudA_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("cloudA", 10);
+        ros::Publisher map_pub_;
+        ros::Publisher iso_pub_;
+        ros::Publisher cloudA_pub_;
+*/
     };
 
 }

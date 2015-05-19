@@ -35,12 +35,11 @@ namespace sdfslam{
 
         virtual void reset_map(){};
 
-        virtual void update_map(const PCLPointCloud& pc, const Eigen::Vector3f& pose3d){};
+        virtual void update_map(const PCLPointCloud& pc, const Eigen::Vector3d& pose3d){};
 
         virtual void publish_map(){};
 
-        //returns case if scan endpoint is within grid res range of wall
-        virtual int get_map_values(const Eigen::Vector2f& coords, float *mpdxdy, bool fine){};
+        virtual int get_map_values(const Eigen::Vector2d& coords, float *mpdxdy, bool fine){};
 
     protected:
 
