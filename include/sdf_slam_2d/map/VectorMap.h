@@ -690,7 +690,7 @@ namespace sdfslam{
                         else if (level == 0)
                             dist_temp = util::p2lsDist(reg_border[0], reg_border[1], cell_coords) * p_grid_res_;
                         else
-                            dist_temp = util::p2lsDistTwo(0, reg_border[0], reg_border[1], cell_coords) * p_grid_res_;
+                            dist_temp = util::p2lsDistTwo(p_grid_res_/2, reg_border[0], reg_border[1], cell_coords) * p_grid_res_;
 
                         if (dist_temp != 0.0) {
                             if (invert)
@@ -700,7 +700,7 @@ namespace sdfslam{
                                 aMap[new_y_index][new_x_index] = dist_temp;
                                 sdf_level_[new_y_index][new_x_index] = level;
                             }
-                            else if (aMap[new_y_index][new_x_index] * dist_temp <
+			    else if (aMap[new_y_index][new_x_index] * dist_temp < 
                                      0) { //todo not fast either, also use level for something useful...
                                 //if (dist_temp>0 || level==0){
                                 //if (sdf_level_[new_y_index][new_x_index] > level || (sdf_level_[new_y_index][new_x_index] == level && dist_temp > 0))  {
@@ -710,7 +710,7 @@ namespace sdfslam{
                                     sdf_level_[new_y_index][new_x_index] = level;
                                 }
                             }
-                            else {
+                            else { //todo might be fishy here...
                                 if (sdf_level_[new_y_index][new_x_index] == level ||
                                     sdf_level_[new_y_index][new_x_index] == level - p_avg_range_) {
                                     if (!p_avg_mapping_) {

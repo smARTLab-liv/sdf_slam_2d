@@ -7,6 +7,9 @@
     <param name="p_dist_threshold_" value="0.4" />	    
     <param name="p_yaw_threshold_" value="0.9" />	    
 
+    <param name="p_stop_iter_time_" value="0.09" />	    
+    <param name="p_num_iter_" value="25" />	    
+
     <param name="p_vanity_" value="2" />	    
     <param name="p_time_warning_threshold_" value="0.1" />	    
     

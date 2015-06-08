@@ -62,7 +62,8 @@ namespace sdfslam{
         publishMapServiceCalled_ = false;
         pose_estimation_ = true;
 
-        map_ = new SDFVectorMap();
+        //map_ = new SDFVectorMap();
+        map_ = new SDFGraphMap();
         visualization_map_ = new OccupancyGrid();
         registration_ = new GaussNewtonRegistration();
 
@@ -221,10 +222,20 @@ namespace sdfslam{
 
         if (update_map_trigger) map_flag_ = true;
 
+
         //transform cloud
         rotation.setRPY(0, 0, pos_.z());
         sensorToWorldTf.setRotation(rotation);
         sensorToWorldTf.setOrigin(tf::Vector3(pos_.x(), pos_.y(), 0));
+
+	// //todo rm me
+        // if ((((map_flag_ && converged_) || (map_empty_)) && p_mapping_) || updateMapServiceCalled_) {	
+	//   Eigen::Vector3d affe(0.05,0.05,0.0);
+	//   affe += pos_;
+	//   sensorToWorldTf.setOrigin(tf::Vector3(affe.x(), affe.y(), 0));
+	// }
+	// //end rm
+
         pcl_ros::transformAsMatrix(sensorToWorldTf, sensorToWorld);
         pcl::transformPointCloud(pc, pc, sensorToWorld);
 

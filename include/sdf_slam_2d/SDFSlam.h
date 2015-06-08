@@ -23,6 +23,7 @@
 #include "map/AbstractMap.h"
 #include "map/VectorMap.h"
 #include "map/OccupancyGrid.h"
+#include "map/GraphMap.h"
 
 #include "registration/AbstractRegistration.h"
 #include "registration/GaussNewton.h"

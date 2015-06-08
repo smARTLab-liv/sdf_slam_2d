@@ -89,6 +89,12 @@ namespace util{
         x[1] = x[1]/p_grid_res + p_map_size_y/2;
     }
 
+    inline void toMap(double* x, const double& p_grid_res, const int& p_map_size_x, const int& p_map_size_y){
+        x[0] = x[0]/p_grid_res + p_map_size_x/2;
+        x[1] = x[1]/p_grid_res + p_map_size_y/2;
+    }
+
+
     inline Eigen::Vector2f toRl(const Eigen::Vector2f& x, double p_grid_res, int p_map_size_x, int p_map_size_y){
         return ( (x-Eigen::Vector2f(p_map_size_x/2, p_map_size_y/2) ) * p_grid_res);
     }
