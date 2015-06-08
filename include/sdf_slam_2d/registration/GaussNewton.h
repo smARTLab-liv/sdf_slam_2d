@@ -61,7 +61,7 @@ namespace sdfslam{
                 end = ros::Time::now();
                 dur = end - start;
                 if (dur.toSec() > p_stop_iter_time_) {
-                    //ROS_WARN("match dur       %d %d", dur.sec, dur.nsec);
+                    ROS_WARN("match dur       %d %d, stopping at iter %d", dur.sec, dur.nsec, i);
                     break;
                 }
 
