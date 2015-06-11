@@ -36,7 +36,8 @@ namespace sdfslam {
         SDFGraphMap(){
             //rolling params different than map update params?
             window_size_ = 5;
-            occ_map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("local_df_map", 10);
+            occ_map_pub_df_ = nh_.advertise<nav_msgs::OccupancyGrid>("local_df_map", 10);
+
         }
 
         void update_map(const PCLPointCloud& pc, const Eigen::Vector3d& pose3d){
@@ -61,12 +62,14 @@ namespace sdfslam {
             to[0] = pos[0]+window_size_/2/p_grid_res_;
             to[1] = pos[1]+window_size_/2/p_grid_res_;
 
-            std::vector<int8_t> omap;
+            std::vector<int8_t> omap_df;
 
             for (int j = from[1]; j < to[1]; j++) {
                 for (int i = from[0]; i < to[0]; i++) {
-                    if (i<0 || i>p_map_size_x_ || j<0 || j>p_map_size_y_)
-                        omap.push_back(0); //unknown
+                    if (i<0 || i>p_map_size_x_ || j<0 || j>p_map_size_y_) {
+                        omap_df.push_back(0); //unknown
+                        omap_df.push_back(-1); //unknown
+                    }
                     else {
                         int mapVal = (int) (sdf_[j][i]*100); //to cm
 
@@ -75,7 +78,7 @@ namespace sdfslam {
                         else
                             if(mapVal > 127)
                                 mapVal = 127;
-                        omap.push_back((int8_t) mapVal);
+                        omap_df.push_back((int8_t) mapVal);
                     }
                 }
             }
@@ -89,18 +92,22 @@ namespace sdfslam {
             //metaData.height = 50;
             metaData.origin.position.x = pos_.x()-window_size_/2;
             metaData.origin.position.y = pos_.y()-window_size_/2;
-            mapGrid.data = omap;
+            mapGrid.data = omap_df;
             mapGrid.info = metaData;
             mapGrid.header.frame_id = p_fixed_frame_;
-            occ_map_pub_.publish(mapGrid);
+            occ_map_pub_df_.publish(mapGrid);
+
+
         }
 
 
     protected:
 
-        ros::Publisher occ_map_pub_;
+        ros::Publisher occ_map_pub_df_;
         Eigen::Vector3d pos_;
         double window_size_;
+
+
 
     };
 
