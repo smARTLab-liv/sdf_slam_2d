@@ -1,11 +1,14 @@
 <launch>
-  <!-- <param name="use_sim_time" value="true" /> -->
+
 
   <node	pkg="sdf_slam_2d" type="sdf_slam" name="sdf_slam_2d" output="screen">
     <param name="p_timeout_ticks_" value="000" />	    
     <param name="p_update_map_aoe_" value="5" />	    
     <param name="p_dist_threshold_" value="0.4" />	    
     <param name="p_yaw_threshold_" value="0.9" />	    
+
+    <param name="p_map_size_x_" value="30" />	    
+    <param name="p_map_size_y_" value="30" />	    
 
     <param name="p_stop_iter_time_" value="0.09" />	    
     <param name="p_num_iter_" value="25" />	    

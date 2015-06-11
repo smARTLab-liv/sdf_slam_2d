@@ -67,8 +67,8 @@ namespace sdfslam {
             for (int j = from[1]; j < to[1]; j++) {
                 for (int i = from[0]; i < to[0]; i++) {
                     if (i<0 || i>p_map_size_x_ || j<0 || j>p_map_size_y_) {
-                        omap_df.push_back(0); //unknown
-                        omap_df.push_back(-1); //unknown
+		      omap_df.push_back(0); //unknown
+		      //                        omap_df.push_back(-1); //unknown
                     }
                     else {
                         int mapVal = (int) (sdf_[j][i]*100); //to cm
@@ -90,8 +90,12 @@ namespace sdfslam {
             metaData.height = window_size_/p_grid_res_;
             //metaData.width = window_size_/;
             //metaData.height = 50;
-            metaData.origin.position.x = pos_.x()-window_size_/2;
-            metaData.origin.position.y = pos_.y()-window_size_/2;
+            util::toRl(pos, p_grid_res_,p_map_size_x_,p_map_size_y_);
+            metaData.origin.position.x = pos[0]-window_size_/2;
+            metaData.origin.position.y = pos[1]-window_size_/2;
+
+            /* metaData.origin.position.x = pos_.x()-window_size_/2; */
+            /* metaData.origin.position.y = pos_.y()-window_size_/2; */
             mapGrid.data = omap_df;
             mapGrid.info = metaData;
             mapGrid.header.frame_id = p_fixed_frame_;

@@ -1,7 +1,5 @@
 <launch>
-  <!-- <param name="use_sim_time" value="true" /> -->
 
-  <param name="use_sim_time" value="true" />
 
   <node	pkg="sdf_slam_2d" type="sdf_slam" name="sdf_slam_2d" output="screen">
     <param name="p_timeout_ticks_" value="000" />	    
@@ -22,7 +20,7 @@
     <param name="p_publish_map_" type="bool" value="false" />	    
 
     <param name="p_avg_range_" value="5" />	    
-    <param name="p_avg_mapping_" type="bool" value="false" />	    
+    <param name="p_avg_mapping_" type="bool" value="true" />	    
     <param name="p_fine_pos_" type="bool" value="true" />	    
     <param name="p_perma_map_" type="bool" value="false" />	    
 

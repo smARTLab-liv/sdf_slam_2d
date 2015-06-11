@@ -155,15 +155,18 @@ namespace sdfslam{
             tf::StampedTransform transform;
             try {
                 ros::Time now = ros::Time(0);
-                tf_.waitForTransform(p_fixed_frame_, p_robot_frame_, now, ros::Duration(10.0));
-                tf_.lookupTransform(p_fixed_frame_, p_robot_frame_, now, transform);
                 double roll, pitch, yaw;
+                ROS_INFO("AFFE External pose update: x %f y %f yaw %f", transform.getOrigin().getX(), transform.getOrigin().getY(), yaw);
+                tf_.waitForTransform(p_fixed_frame_, p_robot_frame_, now, ros::Duration(5.0));
+                tf_.lookupTransform(p_fixed_frame_, p_robot_frame_, now, transform);
+
                 tf::Matrix3x3(transform.getRotation()).getRPY(roll, pitch, yaw);
                 ROS_INFO("External pose update: x %f y %f yaw %f", transform.getOrigin().getX(), transform.getOrigin().getY(), yaw);
                 pos_ = Eigen::Vector3d((double) transform.getOrigin().getX(), (double) transform.getOrigin().getY(), yaw);
             } catch (tf::TransformException ex) {
                 ROS_ERROR("No mocap data received. %s", ex.what());
             }
+	    ROS_INFO("YAFSD");
         }
 
 

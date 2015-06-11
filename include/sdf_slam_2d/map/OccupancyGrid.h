@@ -189,7 +189,7 @@ namespace sdfslam{
                 error -= (y0 - floor(y0)) * dx;
             }
 
-            for (; n >= 0; --n) {  //todo hack, before n > 1
+            for (; n >=-1; --n) {  //todo hack, before n > 1
                 if (n>1)
                     aMap[y][x] = 1;
                 else
