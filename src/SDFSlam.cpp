@@ -7,7 +7,8 @@
 //any later version.
 //
 //This program is distributed in the hope that it will be useful,
-//but WITHOUT ANY WARRANTY; without even the implied warranty of
+//but WITHOUT ANY WARRANTY; without
+// even the implied warranty of
 //MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //GNU General Public License for more details.
 //
@@ -156,7 +157,7 @@ namespace sdfslam{
             try {
                 ros::Time now = ros::Time(0);
                 double roll, pitch, yaw;
-                ROS_INFO("AFFE External pose update: x %f y %f yaw %f", transform.getOrigin().getX(), transform.getOrigin().getY(), yaw);
+                ROS_INFO("External pose update: x %f y %f yaw %f", transform.getOrigin().getX(), transform.getOrigin().getY(), yaw);
                 tf_.waitForTransform(p_fixed_frame_, p_robot_frame_, now, ros::Duration(5.0));
                 tf_.lookupTransform(p_fixed_frame_, p_robot_frame_, now, transform);
 
