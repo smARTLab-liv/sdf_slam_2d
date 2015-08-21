@@ -124,6 +124,9 @@ include_directories(
 
 ## Declare a cpp executable
 add_executable(sdf_slam src/main.cpp src/SDFSlam.cpp include/sdf_slam_2d/SDFSlam.h)
+add_executable(narf src/narf.cpp include/sdf_slam_2d/graph/narf.h)
+
+
 #add_executable(scanlogger src/utils/scanlogger.cpp)
 #add_executable(add_noise src/utils/addNoise.cpp)
 
@@ -136,6 +139,11 @@ target_link_libraries(sdf_slam
   ${catkin_LIBRARIES} 
 #  ${OpenCV_LIBS}
   ${PCL_LIBRARIES}
+)
+
+target_link_libraries(narf
+        ${catkin_LIBRARIES}
+        ${PCL_LIBRARIES}
 )
 
 #target_link_libraries(scanlogger
