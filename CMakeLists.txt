@@ -7,7 +7,7 @@ project(sdf_slam_2d)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
-#  cv_bridge
+# cv_bridge
 # image_transport
   roscpp
   tf
@@ -15,7 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   laser_geometry
   pcl_conversions
   pcl_ros
-#  opencv2
+# opencv2
 )
 
 ## System dependencies are found with CMake's conventions
