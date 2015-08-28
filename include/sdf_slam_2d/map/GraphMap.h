@@ -35,7 +35,7 @@ namespace sdfslam {
 
         SDFGraphMap(){
             //rolling params different than map update params?
-            window_size_ = 5;
+            window_size_ = 10;
             occ_map_pub_df_ = nh_.advertise<nav_msgs::OccupancyGrid>("local_df_map", 10);
             pcd_map_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("local_pcd_map", 10);
 
@@ -53,9 +53,11 @@ namespace sdfslam {
             pcd_map->height   = 1;
             pcd_map->is_dense = false;
             pcd_map->points.resize(pcd_map->width * pcd_map->height);
+            int counter = 0;
             for (int i = from[1]; i< to[1]; i++){
                 for (int j = from[0]; j< to[0]; j++) {
                     if (sdf_[i][j] != 0) {
+                        counter++;
                         pcd_map->points[insertAt].z = sdf_[i][j];
                         Eigen::Vector2f coord(j,i);
                         coord = util::toRl(coord, p_grid_res_, p_map_size_x_,p_map_size_y_);
@@ -68,6 +70,11 @@ namespace sdfslam {
                     }
                 }
             }
+
+            pcd_map->width = counter;
+            pcd_map->points.resize(counter);
+            pcd_map->is_dense = true;
+
             sensor_msgs::PointCloud2 cloudMsg;
             pcl::toROSMsg(*pcd_map, cloudMsg);
             cloudMsg.header.frame_id = p_fixed_frame_;

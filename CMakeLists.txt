@@ -114,7 +114,7 @@ catkin_package(
 include_directories(include include/sdf_slam_2d)
 include_directories(
   ${catkin_INCLUDE_DIRS}
-#  ${Boost_LIBRARIES}
+  ${Boost_LIBRARIES}
 )
 
 ## Declare a cpp library
@@ -144,6 +144,7 @@ target_link_libraries(sdf_slam
 target_link_libraries(narf
         ${catkin_LIBRARIES}
         ${PCL_LIBRARIES}
+        ${Boost_LIBRARIES}
 )
 
 #target_link_libraries(scanlogger
