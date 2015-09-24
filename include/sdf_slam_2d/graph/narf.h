@@ -72,7 +72,7 @@ void pcdCb(const sensor_msgs::PointCloud2ConstPtr& pcd_msg) {
     pcl::PointCloud<pcl::PointWithViewpoint> far_ranges;
     Eigen::Affine3f scene_sensor_pose(Eigen::Affine3f::Identity ());
 
-    setUnseenToMaxRange = true;
+    setUnseenToMaxRange = false;
 
     pcl::PointCloud<pcl::PointXYZ> pc;
     pcl::fromROSMsg(*pcd_msg, pc);

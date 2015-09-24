@@ -35,7 +35,7 @@ namespace sdfslam {
 
         SDFGraphMap(){
             //rolling params different than map update params?
-            window_size_ = 10;
+            window_size_ = 4;
             occ_map_pub_df_ = nh_.advertise<nav_msgs::OccupancyGrid>("local_df_map", 10);
             pcd_map_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("local_pcd_map", 10);
 
@@ -67,6 +67,13 @@ namespace sdfslam {
                         pcd_map->points[insertAt].y = p_grid_res_/2 + i*p_grid_res_ - (p_map_size_y_/2)*p_grid_res_;
                         //pcd_map->points[insertAt].y = coord.y()+p_grid_res_/2;
                         insertAt++;
+                    }
+                    else {
+                        pcd_map->points[insertAt].z = 0;
+                        pcd_map->points[insertAt].x = p_grid_res_/2 + j*p_grid_res_ - (p_map_size_x_/2)*p_grid_res_;
+                        pcd_map->points[insertAt].y = p_grid_res_/2 + i*p_grid_res_ - (p_map_size_y_/2)*p_grid_res_;
+                        insertAt++;
+                        counter++;
                     }
                 }
             }
