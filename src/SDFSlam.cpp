@@ -167,7 +167,7 @@ namespace sdfslam{
             } catch (tf::TransformException ex) {
                 ROS_ERROR("No mocap data received. %s", ex.what());
             }
-	    ROS_INFO("YAFSD");
+            //ROS_INFO("YAFSD");
         }
 
 

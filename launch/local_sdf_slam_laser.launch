@@ -5,7 +5,7 @@
     <param name="p_timeout_ticks_" value="0" />	    
     <param name="p_update_map_aoe_" value="5" />	    
     
-    <param name="p_initial_pose_" type="bool" value="true" />	    
+    <param name="p_initial_pose_" type="bool" value="false" />	    
     <param name="p_publish_map_" type="bool" value="true" />	    
 
     <param name="p_avg_mapping_" type="bool" value="true" />	    
