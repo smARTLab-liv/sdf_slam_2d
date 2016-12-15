@@ -347,7 +347,7 @@ namespace sdfslam{
             for (int i = 0; i < 4; i++) {
                 indices[0] = indMin[0] + i % 2;
                 indices[1] = indMin[1] + i / 2;
-                if (indices[0] >= 0 && indices[0] <= p_map_size_x_ && indices[1] >= 0 && indices[1] <= p_map_size_y_)
+                if (indices[0] >= 0 && indices[0] < p_map_size_x_ && indices[1] >= 0 && indices[1] < p_map_size_y_)
                     intensities[i] = sdf_[indices[1]][indices[0]];
                 else {
                     ROS_ERROR("map too small, inds %d %d map size %d %d", indices[0], indices[1], p_map_size_x_, p_map_size_x_);
